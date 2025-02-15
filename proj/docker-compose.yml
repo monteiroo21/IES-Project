@@ -1,0 +1,130 @@
+services:
+  database:
+    build: 
+      context: ./database
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    environment:
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_DB=${POSTGRES_DB}
+    ports:
+      - $POSTGRES_LOCAL_PORT:$POSTGRES_DOCKER_PORT
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - custom_network
+
+  backend:
+    build: 
+      context: ./backend
+      dockerfile: Dockerfile
+    restart: on-failure
+    ports:
+      - $BACKEND_LOCAL_PORT:$BACKEND_DOCKER_PORT
+    depends_on:
+      database:
+        condition: service_started
+      kafka:
+        condition: service_healthy
+    environment:
+      JWT_KEY: ${JWT_KEY}
+      ORIGIN_NETWORK: ${FRONTEND_HOST}
+      ORIGIN_PORT: ${FRONTEND_LOCAL_PORT}
+      SPRING_APPLICATION_JSON: '{ 
+        "server.port": "$BACKEND_DOCKER_PORT",
+        "spring.datasource.url"  : "jdbc:postgresql://database:$POSTGRES_DOCKER_PORT/$POSTGRES_DB",
+        "spring.datasource.username" : "$POSTGRES_USER",
+        "spring.datasource.password" : "$POSTGRES_PASSWORD",
+        "spring.jpa.properties.hibernate.dialect" : "org.hibernate.dialect.PostgreSQLDialect",
+        "spring.kafka.consumer.auto-offset-reset" : "earliest",
+        "spring.kafka.consumer.bootstrap-servers" : "kafka:$KAFKA_LISTENER_PORT",
+        "spring.kafka.consumer.key-deserializer" : "org.apache.kafka.common.serialization.StringDeserializer",
+        "spring.kafka.consumer.value-deserializer" : "org.springframework.kafka.support.serializer.JsonDeserializer",
+        "spring.kafka.consumer.properties.spring.json.trusted.packages" : "*",
+        "spring.kafka.consumer.properties.spring.json.value.default.type" : "com.ua.ies.proj.app.models.OrderKafkaDTO"
+        }'
+    volumes:
+      - .m2:/root/.m2
+    networks:
+      - custom_network
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    restart: on-failure
+    ports:
+      - $FRONTEND_LOCAL_PORT:$FRONTEND_DOCKER_PORT
+    depends_on:
+      - backend
+    environment:
+      - VITE_BACKEND_HOST=${BACKEND_HOST}
+      - VITE_BACKEND_PORT=${BACKEND_LOCAL_PORT}
+    networks:
+      - custom_network
+
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.4.4
+    environment:
+      ZOOKEEPER_CLIENT_PORT: $ZOOKEEPER_DOCKER_PORT
+      ZOOKEEPER_TICK_TIME: $ZOOKEEPER_TICK_TIME
+    ports:
+      - $ZOOKEEPER_LOCAL_PORT:$ZOOKEEPER_DOCKER_PORT
+    restart: on-failure
+    networks:
+      - custom_network
+  
+  kafka:
+    image: confluentinc/cp-kafka:7.4.4
+    depends_on:
+      - zookeeper
+    ports:
+      - $KAFKA_LOCAL_PORT:$KAFKA_DOCKER_PORT
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:$ZOOKEEPER_DOCKER_PORT
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:$KAFKA_LISTENER_PORT,PLAINTEXT_HOST://kafka:$KAFKA_DOCKER_PORT
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_LOG_RETENTION_MS: 10000
+      KAFKA_LOG_RETENTION_CHECK_INTERVAL_MS: 5000
+    restart: on-failure
+    healthcheck:
+      test: ["CMD", "bash", "-c", "echo > /dev/tcp/${KAFKA_HOST}/${KAFKA_DOCKER_PORT} || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+    networks:
+      - custom_network
+  
+  datagenerator:
+    build: 
+      context: ./datagenerator
+      dockerfile: Dockerfile
+    depends_on:
+      kafka:
+        condition: service_healthy
+      backend:
+        condition: service_started
+    environment:
+      KAFKA_CONTAINER: kafka
+      KAFKA_LISTENER_PORT: $KAFKA_LISTENER_PORT
+    volumes:
+      - datagenerator_data:/app/data
+    restart: on-failure
+    networks:
+      - custom_network
+
+
+volumes:
+  postgres_data:
+  datagenerator_data:
+
+networks:
+  custom_network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 10.10.1.0/24

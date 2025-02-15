@@ -1,0 +1,35 @@
+Data: 15/10/2024
+Hora: 15:00
+
+Participantes:
+- João Monteiro
+- João Viegas
+- Guilherme Santos
+- Jorge Domingues
+
+Pauta da reunião:
+- Divisão das tarefas para a próxima iteração
+- Idealização do protótipo do website
+- Planear a futura arquitetura do projeto
+- Novos templates do github
+
+1. Divisão das tarefas para a próxima iteração
+- João Monteiro e Jorge Domingues ficam responsáveis pela criação do protótipo do website
+- João Viegas ficam responsáveis pela planificação da futura arquitetura do projeto
+- Guilherme Santos ficam responsável pelos novos templates do github
+
+2. Idealização do protótipo do website
+- Discussão do possível modelo do website
+- Protótipo idealizado na ferramenta Figma
+
+3. Planear a futura arquitetura do projeto
+- Pensar que possíveis tecnologias a utilizar no projeto
+
+4. Novos templates do github
+- Backlog e setup do projeto
+- Criar policies para o projeto
+- Git workflow
+- Criar novos templates para Pull Requests
+- Criar novas Issues
+- Criar branchs para cada nova feature
+- Criar templates para os novos branchs

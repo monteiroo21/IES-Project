@@ -1,0 +1,23 @@
+Data: 6/10/2024
+Hora: 14:30
+
+Participantes:
+- João Monteiro
+- João Viegas
+- Guilherme Santos
+- Jorge Domingues
+
+Objetivos:
+- Definir o tema do projeto.
+- Definir o nome do projeto.
+- Definir o personas e cenários.
+- Definir as user stories.
+- Dar setup no github.
+
+Divisão de tarefas:
+- Introdução: Jorge Domingues e Guilherme Santos.
+- Vision Statement: Jorge Domingues e Guilherme Santos.
+- Personas: Jorge Domingues e João Monteiro.
+- User stories: João Viegas, Jorge Domingues, Guilherme Santos.
+- Cenários: João Monteiro.
+- Inicialização do repositório no github: Guilherme Santos.

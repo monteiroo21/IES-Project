@@ -1,0 +1,16 @@
+[tool.poetry]
+name = "datagenerator"
+version = "0.1.0"
+description = ""
+authors = ["Gui113893 <gui.santos91@ua.pt>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.12"
+kafka-python = "^2.0.2"
+filelock = "^3.16.1"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
